@@ -53,6 +53,8 @@ public class PlayerController : MonoBehaviour
     public float runSpeed = 8f;
     public float sneakSpeed = 3f;
 
+    public float rayLength = 0.5f;
+
 
     private void OnEnable()
     {
@@ -90,6 +92,7 @@ public class PlayerController : MonoBehaviour
         {
             case PlayerState.IDLE:
                 _isIdle = true;
+                _rb.velocity = new Vector3(0f, _rb.velocity.y, 0f);
                 break;
             case PlayerState.JOGGING:
                 _isJogging = true;
@@ -129,6 +132,7 @@ public class PlayerController : MonoBehaviour
         switch (currentState)
         {
             case PlayerState.IDLE:
+                DistanceToGround();
                 if (!_isGrounded)
                 {
                     TransitionToState(PlayerState.FALLING);
@@ -143,6 +147,7 @@ public class PlayerController : MonoBehaviour
                 }
                 break;
             case PlayerState.JOGGING:
+                DistanceToGround();
                 if (!_isGrounded)
                 {
                     TransitionToState(PlayerState.FALLING);
@@ -165,6 +170,7 @@ public class PlayerController : MonoBehaviour
                 }
                 break;
             case PlayerState.RUNNING:
+                DistanceToGround();
                 if (!_isGrounded)
                 {
                     TransitionToState(PlayerState.FALLING);
@@ -183,6 +189,7 @@ public class PlayerController : MonoBehaviour
                 }
                 break;
             case PlayerState.SNEAKING:
+                DistanceToGround();
                 if (!_isGrounded)
                 {
                     TransitionToState(PlayerState.FALLING);
@@ -317,17 +324,28 @@ public class PlayerController : MonoBehaviour
         if (_floorCollider.Length > 0)
         {
             _isGrounded = true;
+            _rb.useGravity = false;
 
         }
         else
         {
             _isGrounded = false;
+            _rb.useGravity = true;
 
         }
 
     }
     #endregion
 
+
+    private void DistanceToGround()
+    {
+        if (Physics.Raycast( transform.position, Vector3.down, out RaycastHit hit, rayLength, _layerMask))
+        {
+            _rb.MovePosition(hit.point + new Vector3(0f, rayLength, 0f));
+
+        }
+    }
 
     private void OnDrawGizmos()
     {
@@ -341,5 +359,8 @@ public class PlayerController : MonoBehaviour
         }
 
         Gizmos.DrawCube(groundDetector.position, groundDetectorSize);
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawRay(transform.position, Vector3.down * rayLength);
     }
 }
